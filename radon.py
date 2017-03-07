@@ -3,7 +3,7 @@ import numpy as np
 
 #stepsArray = array with emiter position angles (angle between line an OY)
 #detectorsWidth = detectors area angle
-def radonTransform(input, stepsArray=range(0,180), detectorsNumber=160, detectorsWidth=170):
+def radonTransform(input, stepsArray=range(0,180), detectorsNumber=180, detectorsWidth=140):
     output = np.zeros((detectorsNumber,180))
 
     circleRadius = np.sqrt(np.power(len(input)/2,2)+np.power(len(input[0])/2,2) )
@@ -11,30 +11,28 @@ def radonTransform(input, stepsArray=range(0,180), detectorsNumber=160, detector
 
     detectorDistance = (circleRadius*2*detectorsWidth/180)/detectorsNumber
 
-    print(circleRadius, center, detectorDistance)
-
     startPoint = (center[0],center[1]+circleRadius)
+    max = 0
     for stepAngle in stepsArray:
         centralEmiterPos = (startPoint[0]+circleRadius*np.sin(np.radians(stepAngle)), center[1]+np.cos(np.radians(stepAngle))*circleRadius)
         centralReceiverPos = (startPoint[0]-circleRadius*np.sin(np.radians(stepAngle)), center[1]-np.cos(np.radians(stepAngle))*circleRadius)
 
-        print(centralEmiterPos, centralReceiverPos)
         currentDetector = 0
         while currentDetector < detectorsNumber:
             distanceFromMainDetector = (currentDetector-(detectorsNumber/2))*detectorDistance
-            xMoveDir=1
-            yMoveDir=-1
 
             cos = np.cos(np.radians(stepAngle))
             sin = np.sin(np.radians(stepAngle))
 
-            emiterPos=centralEmiterPos[0]+distanceFromMainDetector*cos*xMoveDir, centralEmiterPos[1]+distanceFromMainDetector*sin*yMoveDir
-            receiverPos=centralReceiverPos[0]+distanceFromMainDetector*cos*xMoveDir, centralReceiverPos[1]+distanceFromMainDetector*sin*yMoveDir
+            emiterPos=centralEmiterPos[0]+distanceFromMainDetector*cos, centralEmiterPos[1]-distanceFromMainDetector*sin
+            receiverPos=centralReceiverPos[0]+distanceFromMainDetector*cos, centralReceiverPos[1]-distanceFromMainDetector*sin
 
             points=BresenhamAlgorithm(input,emiterPos,receiverPos)
-            #TODO POPRAWIĆ MODEL ADDYTYWNY/SUBTRAKTYWNY/ILORAZOWY BO NA RAZIE JEST ŚREDNIA!!!!!!!!
-            if len(points)>0 : output[currentDetector, stepAngle] = sum(points)/(len(points)*255)    #Normalizacja
+            if len(points)>0 : output[currentDetector, stepAngle] = sum(points)    #Normalizacja
+            if output[currentDetector, stepAngle] > max : max = output[currentDetector, stepAngle]
             currentDetector+=1
+
+    output/=max #Normalizacja
     return output
 
 def inverseRadonTransform(input):
@@ -46,7 +44,7 @@ def filter(input):
 
     return input
 
-def BresenhamAlgorithm(input, A, B):
+def BresenhamAlgorithm(input, A, B, moreThanZeroValues=True):
     output = []
     inputSizeX = len(input[0])
     inputSizeY = len(input)
@@ -65,14 +63,16 @@ def BresenhamAlgorithm(input, A, B):
         yAdd = float(abs(Y-Y2))/abs(X-X2)*yAdd
         while X != X2:
             if X>=0 and Y>=0 and X<inputSizeX and Y<inputSizeY:
-                output.append(input[inputSizeY-1-int(Y)][X])
+                color = input[inputSizeY-1-int(Y)][X]
+                if not moreThanZeroValues or color>0: output.append(color)
             Y+=yAdd
             X+=xAdd
     else:
         xAdd = float(abs(X-X2))/abs(Y-Y2)*xAdd
         while Y != Y2:
             if X >= 0 and Y >= 0 and X < inputSizeX and Y < inputSizeY:
-                output.append(input[inputSizeY-1-Y][int(X)])
+                color = input[inputSizeY-1-Y][int(X)]
+                if not moreThanZeroValues or color>0: output.append(color)
             X+=xAdd
             Y+=yAdd
     return output
