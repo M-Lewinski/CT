@@ -59,20 +59,18 @@ def BresenhamAlgorithm(input, A, B, moreThanZeroValues=True):
     if Y<Y2 : yAdd = 1
     else : yAdd = -1
 
+    def bresenhamLoop(X,Y,output):
+        if X >= 0 and Y >= 0 and X < inputSizeX and Y < inputSizeY:
+            color = input[inputSizeY - 1 - int(Y)][int(X)]
+            if not moreThanZeroValues or color > 0: output.append(color)
+        Y += yAdd
+        X += xAdd
+        return X,Y,output
+
     if dx > dy :
         yAdd = float(abs(Y-Y2))/abs(X-X2)*yAdd
-        while X != X2:
-            if X>=0 and Y>=0 and X<inputSizeX and Y<inputSizeY:
-                color = input[inputSizeY-1-int(Y)][X]
-                if not moreThanZeroValues or color>0: output.append(color)
-            Y+=yAdd
-            X+=xAdd
+        while X != X2: X,Y,output = bresenhamLoop(X,Y,output)
     else:
         xAdd = float(abs(X-X2))/abs(Y-Y2)*xAdd
-        while Y != Y2:
-            if X >= 0 and Y >= 0 and X < inputSizeX and Y < inputSizeY:
-                color = input[inputSizeY-1-Y][int(X)]
-                if not moreThanZeroValues or color>0: output.append(color)
-            X+=xAdd
-            Y+=yAdd
+        while Y != Y2: X,Y,output = bresenhamLoop(X,Y,output)
     return output
