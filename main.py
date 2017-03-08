@@ -1,40 +1,46 @@
 import matplotlib.pyplot as plt
 import radon as rn
 import numpy as np
-from skimage import data, color, exposure, measure
+from skimage import data, color, measure
 
-step=np.pi/180
-detectorsNumber=35
-detectorWidth=np.pi/6
+step = np.pi/180
+detectorsNumber = 35
+detectorWidth = np.pi/6
 
 def main():
     inData = data.imread("input.png", as_grey=True)
     inData = color.rgb2grey(inData)
 
-    radonImage = rn.radonTransform(inData)
-    inverseRadonImage = rn.inverseRadonTransform(radonImage)
-    filterImage = rn.filter(inverseRadonImage)
-
-
-
-
     plt.subplot(2, 2, 1)
     plt.title("Original image")
-    plt.imshow(color.gray2rgb(inData))
+    plt.imshow(inData, cmap='gray')
 
     plt.subplot(2, 2, 2)
+    plt.xlabel("Emiter/detector rotation")
+    plt.ylabel("Number of receiver")
     plt.title("Radon transform image")
-    plt.imshow(color.gray2rgb(radonImage))
+
+    radonImage = rn.radonTransform(inData)
+    plt.imshow(radonImage, cmap='gray')
+
+    # radonImage = rn.radonTransform(inData,[0])
+    # for i in range(1,180):
+    #    radonImage = rn.radonTransform(inData,[i],output=radonImage)
+    #    plt.imshow(radonImage,cmap='gray')
+
+    inverseRadonImage = rn.inverseRadonTransform(radonImage)
 
     plt.subplot(2, 2, 3)
     plt.title("Inverse Radon transform image")
-    plt.imshow(color.gray2rgb(inverseRadonImage))
+    plt.imshow(inverseRadonImage, cmap='gray')
 
+    filterImage = rn.filter(inverseRadonImage)
     plt.subplot(2, 2, 4)
     plt.title("Filtered image")
-    plt.imshow(color.gray2rgb(filterImage))
+    plt.imshow(filterImage, cmap='gray')
 
     plt.show()
+
 
 if __name__ == "__main__":
     main()
