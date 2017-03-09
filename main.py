@@ -1,15 +1,17 @@
 import matplotlib.pyplot as plt
 import radon as rn
 import numpy as np
-from skimage import data, color, exposure, measure
+# from skimage import data, color, exposure, measure
+from PIL import Image,ImageTk
+import cv2
 
 step=np.pi/180
 detectorsNumber=35
 detectorWidth=np.pi/6
 
 def main():
-    inData = data.imread("input.png", as_grey=True)
-    inData = color.rgb2grey(inData)
+    inData = cv2.imread("input.png", as_grey=True)
+    inData = cv2.cvtColor(inData,cv2.COLOR_BGR2GRAY)
 
     radonImage = rn.radonTransform(inData)
     inverseRadonImage = rn.inverseRadonTransform(radonImage)
