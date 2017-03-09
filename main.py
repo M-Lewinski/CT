@@ -9,7 +9,6 @@ detectorWidth = np.pi/6
 
 def main():
     inData = data.imread("input.png", as_grey=True)
-    inData = color.rgb2grey(inData)
 
     plt.subplot(2, 2, 1)
     plt.title("Original image")

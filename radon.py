@@ -53,9 +53,30 @@ def radonCircleLoop(input, output, stepsArray, center, circleRadius, detectorsNu
             currentDetector += 1
     return output
 
-def filter(input):
+def filter(input, mask=None):
+    output=np.zeros((len(input),len(input[0])))
+    if mask is None: mask = np.array([[0.1,0.2,0.3,0.2,0.1],[0.2,0.5,0.7,0.5,0.2],[0.3,0.7,1,0.7,0.3],[0.2,0.5,0.7,0.5,0.2],[0.1,0.2,0.3,0.2,0.1]])
+    weightSum = sum(mask.flatten())
+    maskSizeY, maskSizeX=len(mask), len(mask[0])
+    inputSizeY, inputSizeX = len(input), len(input[0])
 
-    return input
+
+    for Y in range(0,inputSizeY):
+        for X in range(0,inputSizeX):
+            val=0
+            for maskY in range(-int(maskSizeY/2),int(maskSizeY/2)+1):
+                for maskX in range(-int(maskSizeX/2),int(maskSizeX/2)+1):
+                    cY = Y+maskY
+                    cX = X+maskX
+                    if cY<0: cY+= inputSizeY
+                    if cX<0: cX+= inputSizeX
+                    if cY>=inputSizeY: cY -= inputSizeY
+                    if cX>=inputSizeX: cX -= inputSizeX
+                    val+=input[cY][cX]*mask[maskY+int(maskSizeY/2)][maskX+int(maskSizeX/2)]
+            val/=weightSum
+            output[Y][X]=val
+
+    return output
 
 # returnOrDraw : Return list of values if True ; Draw line if False
 def BresenhamAlgorithm(input, A, B, output=None, moreThanZeroValues=True, returnOrDraw=True, lineColor=0.5):
