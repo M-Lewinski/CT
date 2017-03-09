@@ -3,33 +3,15 @@ import numpy as np
 
 #stepsArray = array with emiter position angles (angle between line an OY)
 #detectorsWidth = detectors area angle
-def radonTransform(input, stepsArray=range(0,180), detectorsNumber=100, detectorsWidth=150, output=None):
+def radonTransform(input, stepsArray=range(0,180), detectorsNumber=100, detectorsWidth=140, output=None):
     if output is None: output = np.zeros((detectorsNumber,180))
 
     circleRadius = np.sqrt(np.power(len(input)/2,2)+np.power(len(input[0])/2,2) )
     center = (len(input[0])/2,len(input)/2)
-    detectorDistance = (circleRadius*2*detectorsWidth/180)/detectorsNumber
 
-    max = 0
-    for stepAngle in stepsArray:
-        centralEmiterPos = (center[0]+circleRadius*np.sin(np.radians(stepAngle)), center[1]+np.cos(np.radians(stepAngle))*circleRadius)
-        centralReceiverPos = (center[0]-circleRadius*np.sin(np.radians(stepAngle)), center[1]-np.cos(np.radians(stepAngle))*circleRadius)
+    output = radonCircleLoop(input,output, stepsArray,center,circleRadius,detectorsNumber,detectorsWidth)
 
-        currentDetector = 0
-        while currentDetector < detectorsNumber:
-            distanceFromMainDetector = (currentDetector-(detectorsNumber/2))*detectorDistance
-
-            cos = np.cos(np.radians(stepAngle))
-            sin = np.sin(np.radians(stepAngle))
-            emiterPos=centralEmiterPos[0]+distanceFromMainDetector*cos, centralEmiterPos[1]-distanceFromMainDetector*sin
-            receiverPos=centralReceiverPos[0]+distanceFromMainDetector*cos, centralReceiverPos[1]-distanceFromMainDetector*sin
-
-            points=BresenhamAlgorithm(input,emiterPos,receiverPos)
-            if len(points)>0 : output[currentDetector, stepAngle] = sum(points)    #Normalizacja
-            if output[currentDetector, stepAngle] > max : max = output[currentDetector, stepAngle]
-            currentDetector+=1
-
-    output[:,stepsArray]/=max #Normalizacja
+    output[:,stepsArray]/=max(output.flatten()) #Normalizacja
     return output
 
 def inverseRadonTransform(input, stepsArray=range(0,180), detectorsWidth=150, output=None, outputWidth=None, outputHeight=None):
@@ -41,26 +23,34 @@ def inverseRadonTransform(input, stepsArray=range(0,180), detectorsWidth=150, ou
 
     circleRadius = np.sqrt(np.power(outputWidth/2,2)+np.power(outputHeight/2,2) )
     center = (outputWidth/2,outputHeight/2)
-    detectorDistance = (circleRadius*2*detectorsWidth/180)/len(input)
+
+    output = radonCircleLoop(input,output, stepsArray,center,circleRadius,detectorsNumber,detectorsWidth,inverse=True)
+
+    output /= max(output.flatten())
+    return output
+
+def radonCircleLoop(input, output, stepsArray, center, circleRadius, detectorsNumber, detectorsWidth, inverse=False):
+    detectorDistance = (circleRadius * 2 * detectorsWidth / 180) / detectorsNumber
 
     for stepAngle in stepsArray:
-        centralEmiterPos = (center[0]+circleRadius*np.sin(np.radians(stepAngle)), center[1]+np.cos(np.radians(stepAngle))*circleRadius)
-        centralReceiverPos = (center[0]-circleRadius*np.sin(np.radians(stepAngle)), center[1]-np.cos(np.radians(stepAngle))*circleRadius)
+        centralEmiterPos = (center[0] + circleRadius * np.sin(np.radians(stepAngle)),center[1] + np.cos(np.radians(stepAngle)) * circleRadius)
+        centralReceiverPos = (center[0] - circleRadius * np.sin(np.radians(stepAngle)),center[1] - np.cos(np.radians(stepAngle)) * circleRadius)
 
         currentDetector = 0
         while currentDetector < detectorsNumber:
-            distanceFromMainDetector = (currentDetector-(detectorsNumber/2))*detectorDistance
+            distanceFromMainDetector = (currentDetector - (detectorsNumber / 2)) * detectorDistance
 
             cos = np.cos(np.radians(stepAngle))
             sin = np.sin(np.radians(stepAngle))
-            emiterPos=centralEmiterPos[0]+distanceFromMainDetector*cos, centralEmiterPos[1]-distanceFromMainDetector*sin
-            receiverPos=centralReceiverPos[0]+distanceFromMainDetector*cos, centralReceiverPos[1]-distanceFromMainDetector*sin
-
-            color = input[currentDetector, stepAngle]
-            output = BresenhamAlgorithm(input, emiterPos, receiverPos, output, returnOrDraw=False, lineColor=color)
-            currentDetector+=1
-
-    output /= max(output.flatten())
+            emiterPos = centralEmiterPos[0] + distanceFromMainDetector * cos, centralEmiterPos[1] - distanceFromMainDetector * sin
+            receiverPos = centralReceiverPos[0] + distanceFromMainDetector * cos, centralReceiverPos[1] - distanceFromMainDetector * sin
+            if not inverse:
+                points = BresenhamAlgorithm(input, emiterPos, receiverPos)
+                if len(points) > 0: output[currentDetector][stepAngle] = sum(points)  # Normalizacja
+            else:
+                color = input[currentDetector, stepAngle]
+                output = BresenhamAlgorithm(input, emiterPos, receiverPos, output, returnOrDraw=False, lineColor=color)
+            currentDetector += 1
     return output
 
 def filter(input):
