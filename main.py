@@ -20,7 +20,7 @@ def main():
     plt.title("Radon transform image")
 
     radonImage = rn.radonTransform(inData)
-    plt.imshow(radonImage, cmap='gray')
+    plt.imshow(radonImage, cmap='gray', extent=[0,180,len(radonImage),0], interpolation=None)
 
     # radonImage = rn.radonTransform(inData,[0])
     # for i in range(1,180):
