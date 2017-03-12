@@ -1,15 +1,9 @@
 import numpy as np
-import decimal
-
-
-#stepsArray = array with emiter position angles (angle between line an OY)
-#detectorsWidth = detectors area angle
-from matplotlib.mlab import frange
-
 
 def radonTransform(input, stepSize=1, stepsArray=None, detectorsNumber=100, detectorsWidth=140, output=None):
-    if stepsArray is None: stepsArray = frange(0,180-stepSize,stepSize)
+    if stepsArray is None: stepsArray = np.arange(0,181,stepSize)
     xSize = int(180/stepSize+1)
+
     if output is None: output = np.zeros((detectorsNumber,xSize))
 
     circleRadius = np.sqrt(np.power(len(input)/2,2)+np.power(len(input[0])/2,2) )
@@ -21,7 +15,7 @@ def radonTransform(input, stepSize=1, stepsArray=None, detectorsNumber=100, dete
 
 
 def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140, output=None, outputWidth=None, outputHeight=None):
-    if stepsArray is None: stepsArray =frange(0,180-stepSize, stepSize)
+    if stepsArray is None: stepsArray = np.arange(0,181, stepSize)
     if output is None:
         if outputHeight is None: outputHeight = len(input)
         if outputWidth is None: outputWidth = outputHeight
@@ -84,7 +78,9 @@ def filter(input, mask=None):
 # returnOrDraw : Return list of values if True ; Draw line if False
 def BresenhamAlgorithm(input, A, B, output=None, moreThanZeroValues=True, returnOrDraw=True, lineColor=0.5):
     if returnOrDraw and output is None: output = []
-    if not returnOrDraw and output is None: raise NameError("output must be given")
+    if not returnOrDraw:
+        if output is None: raise NameError("output must be given")
+        outSizeX, outSizeY = len(output[0]), len(output)
 
     inputSizeX, inputSizeY,  = len(input[0]), len(input)
     X, Y = int(A[0]), int(A[1])
@@ -96,8 +92,8 @@ def BresenhamAlgorithm(input, A, B, output=None, moreThanZeroValues=True, return
         if returnOrDraw and X >= 0 and Y >= 0 and X < inputSizeX and Y < inputSizeY:
             color = input[inputSizeY - 1 - int(Y)][int(X)]
             if not moreThanZeroValues or color > 0: output.append(color)
-        if not returnOrDraw and X>=0 and Y>=0 and Y<len(output) and X < len(output[0]):
-            output[inputSizeY - 1 - int(Y)][int(X)] += lineColor
+        if not returnOrDraw and X>=0 and Y>=0 and Y<outSizeY and X < outSizeX:
+            output[outSizeY - 1 - int(Y)][int(X)] += lineColor
         return X+xAdd,Y+yAdd,output
 
     if dx >= dy :

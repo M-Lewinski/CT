@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
 import radon as rn
-import numpy as np
 from skimage import data, color, measure
 
-step = np.pi/180
-detectorsNumber = 35
-detectorWidth = np.pi/6
+step = 2
+detectorsNumber = 100
+detectorWidth = 130
 
 def main():
     inData = data.imread("input.png", as_grey=True)
@@ -19,7 +18,7 @@ def main():
     plt.ylabel("Number of receiver")
     plt.title("Radon transform image")
 
-    radonImage = rn.radonTransform(inData)
+    radonImage = rn.radonTransform(inData, stepSize=step, detectorsNumber=detectorsNumber, detectorsWidth=detectorWidth)
     plt.imshow(radonImage, cmap='gray', extent=[0,180,len(radonImage),0], interpolation=None)
 
     # radonImage = rn.radonTransform(inData,[0])
@@ -27,7 +26,7 @@ def main():
     #    radonImage = rn.radonTransform(inData,[i],output=radonImage)
     #    plt.imshow(radonImage,cmap='gray')
 
-    inverseRadonImage = rn.inverseRadonTransform(radonImage)
+    inverseRadonImage = rn.inverseRadonTransform(radonImage, stepSize=step, detectorsWidth=detectorWidth, outputHeight=256, outputWidth=256)
 
     plt.subplot(2, 2, 3)
     plt.title("Inverse Radon transform image")
