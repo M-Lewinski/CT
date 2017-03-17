@@ -1,7 +1,23 @@
 import numpy as np
 
+blurFilter = np.array([[0.2,0.2,0.2,0.2,0.2],[0.2,0.5,0.5,0.5,0.2],[0.2,0.5,1,0.5,0.2],[0.2,0.5,0.5,0.5,0.2],[0.2,0.2,0.2,0.2,0.2]])
+
+backProjectionFilter = np.array([[0,1,0], [1,1,1], [0,1,0]])
+
+def createBackProjectionFilter(len):
+    if len%2==0: raise NameError("Incorrect len")
+    out = np.zeros(len)
+    middle=int(len/2)
+    out[middle]=1
+    for i in range(1,middle,2):
+        val=-4/(np.power(np.pi,2) * np.power(i,2))
+        out[middle-i]=val
+        out[middle+i] = val
+    return out
+
+
 def radonTransform(input, stepSize=1, stepsArray=None, detectorsNumber=100, detectorsWidth=140, output=None):
-    if stepsArray is None: stepsArray = np.arange(0,181,stepSize)
+    if stepsArray is None: stepsArray = np.arange(0,180,stepSize)
     xSize = int(180/stepSize+1)
 
     if output is None: output = np.zeros((detectorsNumber,xSize))
@@ -12,7 +28,6 @@ def radonTransform(input, stepSize=1, stepsArray=None, detectorsNumber=100, dete
 
     output /= max(output.flatten()) #Normalizacja
     return output
-
 
 def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140, output=None, outputWidth=None, outputHeight=None):
     if stepsArray is None: stepsArray = np.arange(0,181, stepSize)
@@ -25,7 +40,9 @@ def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140
     center = (outputWidth/2,outputHeight/2)
     output = radonCircleLoop(input,output, stepsArray, stepSize, center,circleRadius,len(input),detectorsWidth,inverse=True)
 
+    output -= min(output.flatten())
     output /= max(output.flatten())
+
     return output
 
 def radonCircleLoop(input, output, stepsArray, step, center, circleRadius, detectorsNumber, detectorsWidth, inverse=False):
@@ -51,16 +68,15 @@ def radonCircleLoop(input, output, stepsArray, step, center, circleRadius, detec
     return output
 
 
-def filter(input, mask=None):
+def filter2D(input, mask=None, divide=True):
     output=np.zeros((len(input),len(input[0])))
-    if mask is None: mask = np.array([[0.3,0.3,0.3,0.3,0.3],[0.3,0.7,0.7,0.7,0.3],[0.3,0.7,1,0.7,0.3],[0.3,0.7,0.7,0.7,0.3],[0.3,0.3,0.3,0.3,0.3]])
+    if mask is None: mask = blurFilter
     weightSum = sum(mask.flatten())
     maskSizeY, maskSizeX=len(mask), len(mask[0])
     inputSizeY, inputSizeX = len(input), len(input[0])
 
     for Y in range(0,inputSizeY):
         for X in range(0,inputSizeX):
-            val=0
             for maskY in range(-int(maskSizeY/2),int(maskSizeY/2)+1):
                 for maskX in range(-int(maskSizeX/2),int(maskSizeX/2)+1):
                     cY, cX = Y+maskY, X+maskX
@@ -68,12 +84,27 @@ def filter(input, mask=None):
                     if cX<0: cX+= inputSizeX
                     if cY>=inputSizeY: cY -= inputSizeY
                     if cX>=inputSizeX: cX -= inputSizeX
-                    val+=input[cY][cX]*mask[maskY+int(maskSizeY/2)][maskX+int(maskSizeX/2)]
-            val/=weightSum
-            output[Y][X]=val
-
+                    output[Y][X]+=input[cY][cX]*mask[maskY+int(maskSizeY/2)][maskX+int(maskSizeX/2)]
+    if divide: output/= weightSum
     return output
 
+def filterSinogram(input):
+    lines = len(input[0])
+    mask = createBackProjectionFilter(13)
+    for num in range(0,lines):
+        input[:, num] = filter1D(input[:,num], mask=mask)
+    return input
+
+def filter1D(input, mask=None):
+    output = np.zeros(len(input))
+    if mask is None: mask = createBackProjectionFilter(9)
+    maskSize, inputSize = len(mask), len(input)
+    for X in range(0,inputSize):
+        for maskX in range(-int(maskSize / 2), int(maskSize / 2) + 1):
+            cX = X + maskX
+            if cX >= inputSize: cX -= inputSize
+            output[X] += input[cX] * mask[maskX + int(maskSize / 2)]
+    return output
 
 # returnOrDraw : Return list of values if True ; Draw line if False
 def BresenhamAlgorithm(input, A, B, output=None, moreThanZeroValues=True, returnOrDraw=True, lineColor=0.5):
