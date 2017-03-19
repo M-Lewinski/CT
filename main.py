@@ -2,42 +2,33 @@ import matplotlib.pyplot as plt
 import radon as rn
 from skimage import data
 
-
 step = 2
 detectorsNumber = 120
 detectorWidth = 130
+filter=True
 
 def main():
     inData = data.imread("input.png", as_grey=True)
 
-    plt.subplot(2, 3, 1)
+    plt.subplot(2, 2, 1)
     plt.title("Original image")
     plt.imshow(inData, cmap='gray')
 
-    plt.subplot(2, 3, 2)
+    plt.subplot(2, 2, 2)
     plt.xlabel("Emiter/detector rotation")
     plt.ylabel("Number of receiver")
-    plt.title("Radon transform image")
+    plt.title("Radon sinogram")
 
-    radonImage = rn.radonTransform(inData, stepSize=step, detectorsNumber=detectorsNumber, detectorsWidth=detectorWidth)
-    plt.imshow(radonImage, cmap='gray', extent=[0,180,len(radonImage),0], interpolation=None)
-    inverseRadonImage = rn.inverseRadonTransform(radonImage, stepSize=step, detectorsWidth=detectorWidth)
-    plt.subplot(2, 3, 4)
+    sinogram = rn.radonTransform(inData, stepSize=step, detectorsNumber=detectorsNumber, detectorsWidth=detectorWidth)
+    plt.imshow(sinogram, cmap='gray', extent=[0,180,len(sinogram),0], interpolation=None)
+
+    if filter: sinogram = rn.filterSinogram(sinogram)
+
+
+    inverseRadonImage = rn.inverseRadonTransform(sinogram, stepSize=step, detectorsWidth=detectorWidth, outputWidth=256, outputHeight=256)
+    plt.subplot(2, 2, 3)
     plt.title("Inverse Radon transform image")
     plt.imshow(inverseRadonImage, cmap='gray')
-
-
-
-    filteredSinogram = rn.filterSinogram(radonImage)
-    plt.subplot(2, 3, 3)
-    plt.title("Filtered sinogram")
-    plt.imshow(filteredSinogram, cmap='gray', extent=[0,180,len(radonImage),0], interpolation=None)
-
-
-    inverseRadonFilteredImage = rn.inverseRadonTransform(filteredSinogram, stepSize=step, detectorsWidth=detectorWidth)
-    plt.subplot(2, 3, 5)
-    plt.title("Inverse filtered Radon transform image")
-    plt.imshow(inverseRadonFilteredImage, cmap='gray')
 
     plt.show()
 

@@ -1,9 +1,5 @@
 import numpy as np
 
-blurFilter = np.array([[0.2,0.2,0.2,0.2,0.2],[0.2,0.5,0.5,0.5,0.2],[0.2,0.5,1,0.5,0.2],[0.2,0.5,0.5,0.5,0.2],[0.2,0.2,0.2,0.2,0.2]])
-
-backProjectionFilter = np.array([[0,1,0], [1,1,1], [0,1,0]])
-
 def createBackProjectionFilter(len):
     if len%2==0: raise NameError("Incorrect len")
     out = np.zeros(len)
@@ -65,27 +61,6 @@ def radonCircleLoop(input, output, stepsArray, step, center, circleRadius, detec
             else:
                 color = input[currentDetector, int(stepAngle/step)]
                 output = BresenhamAlgorithm(input, emiterPos, receiverPos, output, returnOrDraw=False, lineColor=color)
-    return output
-
-
-def filter2D(input, mask=None, divide=True):
-    output=np.zeros((len(input),len(input[0])))
-    if mask is None: mask = blurFilter
-    weightSum = sum(mask.flatten())
-    maskSizeY, maskSizeX=len(mask), len(mask[0])
-    inputSizeY, inputSizeX = len(input), len(input[0])
-
-    for Y in range(0,inputSizeY):
-        for X in range(0,inputSizeX):
-            for maskY in range(-int(maskSizeY/2),int(maskSizeY/2)+1):
-                for maskX in range(-int(maskSizeX/2),int(maskSizeX/2)+1):
-                    cY, cX = Y+maskY, X+maskX
-                    if cY<0: cY+= inputSizeY
-                    if cX<0: cX+= inputSizeX
-                    if cY>=inputSizeY: cY -= inputSizeY
-                    if cX>=inputSizeX: cX -= inputSizeX
-                    output[Y][X]+=input[cY][cX]*mask[maskY+int(maskSizeY/2)][maskX+int(maskSizeX/2)]
-    if divide: output/= weightSum
     return output
 
 def filterSinogram(input):
