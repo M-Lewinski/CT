@@ -15,9 +15,9 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
 
-step = 2
-detectorsNumber = 120
-detectorWidth = 130
+step = 1
+detectorsNumber = 100
+detectorWidth = 180
 filter=True
 
 def transformImage(graph):

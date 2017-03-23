@@ -38,7 +38,6 @@ def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140
 
     output -= min(output.flatten())
     output /= max(output.flatten())
-
     return output
 
 def radonCircleLoop(input, output, stepsArray, step, center, circleRadius, detectorsNumber, detectorsWidth, inverse=False):
@@ -65,18 +64,22 @@ def radonCircleLoop(input, output, stepsArray, step, center, circleRadius, detec
 
 def filterSinogram(input):
     lines = len(input[0])
-    mask = createBackProjectionFilter(13)
+    s = 9
+    while s >= len(input): s -= 2
+    mask = createBackProjectionFilter(s)
     for num in range(0,lines):
         input[:, num] = filter1D(input[:,num], mask=mask)
     return input
 
 def filter1D(input, mask=None):
     output = np.zeros(len(input))
+
     if mask is None: mask = createBackProjectionFilter(9)
     maskSize, inputSize = len(mask), len(input)
     for X in range(0,inputSize):
         for maskX in range(-int(maskSize / 2), int(maskSize / 2) + 1):
             cX = X + maskX
+            if cX < 0: cX += inputSize
             if cX >= inputSize: cX -= inputSize
             output[X] += input[cX] * mask[maskX + int(maskSize / 2)]
     return output
