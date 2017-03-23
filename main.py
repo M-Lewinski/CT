@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import radon as rn
 from skimage import data
 
-step = 2
-detectorsNumber = 120
-detectorWidth = 130
+step = 1
+detectorsNumber = 100
+detectorWidth = 180
 filter=True
 
 def main():
