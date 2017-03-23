@@ -15,21 +15,21 @@ import tkinter as tk
 from tkinter import filedialog
 from tkinter import ttk
 
-step = np.pi/180
-detectorsNumber = 35
-detectorWidth = np.pi/6
+step = 2
+detectorsNumber = 120
+detectorWidth = 130
+filter=True
 
 def transformImage(graph):
     # path = filedialog.askopenfilename()
     inData = data.imread("input.png", as_grey=True)
     graph.changePlot((2,2,1),inData)
-    radonImage = rn.radonTransform(inData)
-    graph.changePlot((2, 2, 2), radonImage)
-    inverseRadonImage = rn.inverseRadonTransform(radonImage)
+    sinogram = rn.radonTransform(inData, stepSize=step, detectorsNumber=detectorsNumber, detectorsWidth=detectorWidth)
+    graph.plots[(2,2,2)].imshow(sinogram, cmap='gray', extent=[0,180,len(sinogram),0], interpolation=None)
+    graph.canvas.show()
+    if filter: sinogram = rn.filterSinogram(sinogram)
+    inverseRadonImage = rn.inverseRadonTransform(sinogram, stepSize=step, detectorsWidth=detectorWidth, outputWidth=256, outputHeight=256)
     graph.changePlot((2, 2, 3), inverseRadonImage)
-    filterImage = rn.filter(inverseRadonImage)
-    graph.changePlot((2, 2, 4), filterImage)
-
 
 class MainGui(tk.Tk):
     def __init__(self):
@@ -54,8 +54,8 @@ class Graph(Figure):
     def __init__(self, figsize=(10,10), dpi=100):
         Figure.__init__(self, figsize=figsize, dpi=dpi)
         titles = [{"title": "Original image"}, {"title": "Radon transform image", "xlabel": "Emiter/detector rotation", "ylabel": "Number of receiver"},
-                 {"title": "Inverse Radon transform image"}, {"title": "Filtered image"}]
-        for i in range(0, 4):
+                 {"title": "Inverse Radon transform image"}]
+        for i in range(0, 3):
             plt = self.add_subplot(2, 2, i+1)
             if "title" in titles[i]:
                 plt.set_title(titles[i]["title"])
@@ -69,7 +69,6 @@ class Graph(Figure):
     def changePlot(self,plot,image,cmap="gray"):
         self.plots[plot].imshow(image,cmap=cmap)
         self.canvas.show()
-
 
 def main():
     app = MainGui()
