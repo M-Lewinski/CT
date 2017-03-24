@@ -26,7 +26,7 @@ def radonTransform(input, stepSize=1, stepsArray=None, detectorsNumber=100, dete
     return output
 
 def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140, output=None, outputWidth=None, outputHeight=None):
-    if stepsArray is None: stepsArray = np.arange(0,181, stepSize)
+    if stepsArray is None: stepsArray = np.arange(0,180, stepSize)
     if output is None:
         if outputHeight is None: outputHeight = len(input)
         if outputWidth is None: outputWidth = outputHeight

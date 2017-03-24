@@ -5,7 +5,7 @@ import matplotlib.cm as cm
 from skimage import data
 import radon as rn
 import itertools
-
+from multiprocessing import Process
 
 #CHANGE THIS VALUES
 step = [45,40,35,30,20,15,10,5,3,2,1,0.5]
@@ -35,8 +35,8 @@ def testAlgorithm(stepArr, detectorsArr, widthArr, filter, figSaveName, prefix="
                 if filter: sinogram = rn.filterSinogram(sinogram)
                 inverseRadonImage = rn.inverseRadonTransform(sinogram, stepSize=SVal, detectorsWidth=DVal, outputWidth=len(inData[0]), outputHeight=len(inData))
 
-                plt.imshow(inverseRadonImage, cmap='gray')
-                plt.savefig("test/"+str(SVal)+":"+str(DVal)+":"+str(WVal)+":"+str(filter)+".png")
+                #plt.imshow(inverseRadonImage, cmap='gray')
+                #plt.savefig("test/"+str(SVal)+":"+str(DVal)+":"+str(WVal)+":"+str(filter)+".png")
 
                 result[S,D,W] = returnDifference2D(inData, inverseRadonImage)
                 print("{}{}. {:.2f}% --- step:{} detectorsNum:{} width:{} result:{}".format(prefix,num,(num/all*100),SVal,DVal,WVal,result[S,D,W]))
@@ -97,9 +97,34 @@ def smart4DPlot(X, Y, Z, data, figSaveName, labelX="Step", labelY="Number of det
     plot4D(X,Y,Z,data,labelX,labelY,labelZ, figSaveName)
     return
 
-def main():
-    testAlgorithm(step, detectors, detWidth, True, "main4D.pdf")
+def runInParallel(*fns):
+  proc = []
+  for fn in fns:
+    p = Process(target=fn)
+    p.start()
+    proc.append(p)
+  for p in proc:
+    p.join()
 
+def main():
+    def test1():
+        testAlgorithm(step, detectors, detWidth, True, "main4DFilter.pdf", prefix="test1: ")
+    def test2():
+        testAlgorithm(step, detectors, detWidth, False, "main4DNoFilter.pdf", prefix="test2: ")
+    def test3():
+        testAlgorithm([1], detectors, detWidth, True, "main3DFilterStep1.pdf", prefix="test3: ")
+    def test4():
+        testAlgorithm([1], detectors, detWidth, False, "main4DNoFilterStep1.pdf", prefix="test4: ")
+    def test5():
+        testAlgorithm(step, [100], detWidth, True, "main3DFilterDetectors100.pdf", prefix="test5: ")
+    def test6():
+        testAlgorithm(step, [100], detWidth, False, "main4DNoFilterDetectors100.pdf", prefix="test6: ")
+    def test7():
+        testAlgorithm(step, detectors, [140], True, "main3DFilterWidth140.pdf", prefix="test7: ")
+    def test8():
+        testAlgorithm(step, detectors, [140], False, "main4DNoFilterWidth140.pdf", prefix="test8: ")
+
+    runInParallel(test1,test2, test3, test4, test5, test6, test7, test8)
     return
 
 
