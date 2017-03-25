@@ -3,8 +3,8 @@ import radon as rn
 from skimage import data
 
 step = 0.5
-detectorsNumber = 100
-detectorWidth = 180
+detectorsNumber = 200
+detectorWidth = 150
 filter=True
 
 def main():
@@ -24,8 +24,7 @@ def main():
 
     if filter: sinogram = rn.filterSinogram(sinogram)
 
-
-    inverseRadonImage = rn.inverseRadonTransform(sinogram, stepSize=step, detectorsWidth=detectorWidth, outputWidth=256, outputHeight=256)
+    inverseRadonImage = rn.inverseRadonTransform(sinogram, stepSize=step, detectorsWidth=detectorWidth)
     plt.subplot(2, 2, 3)
     plt.title("Inverse Radon transform image")
     plt.imshow(inverseRadonImage, cmap='gray')

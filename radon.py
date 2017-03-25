@@ -6,13 +6,13 @@ def createBackProjectionFilter(len):
     middle=int(len/2)
     out[middle]=1
     for i in range(1,middle,2):
-        val=-4/(np.power(np.pi,2) * np.power(i,2))
+        val=-4.35/(np.power(np.pi,2) * np.power(i,2))
         out[middle-i]=val
         out[middle+i] = val
     return out
 
 
-def radonTransform(input, stepSize=1, stepsArray=None, detectorsNumber=100, detectorsWidth=140, output=None):
+def radonTransform(input, stepSize=1, stepsArray=None, detectorsNumber=100, detectorsWidth=140, output=None, normalize=True):
     if stepsArray is None: stepsArray = np.arange(0,180,stepSize)
     xSize = int(180/stepSize+1)
 
@@ -22,10 +22,10 @@ def radonTransform(input, stepSize=1, stepsArray=None, detectorsNumber=100, dete
     center = (len(input[0])/2,len(input)/2)
     output = radonCircleLoop(input,output, stepsArray, stepSize, center, circleRadius,detectorsNumber,detectorsWidth)
 
-    output /= max(output.flatten()) #Normalizacja
+    if normalize: output /= max(output.flatten()) #Normalizacja
     return output
 
-def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140, output=None, outputWidth=None, outputHeight=None):
+def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140, output=None, outputWidth=None, outputHeight=None, normalize=True):
     if stepsArray is None: stepsArray = np.arange(0,180, stepSize)
     if output is None:
         if outputHeight is None: outputHeight = len(input)
@@ -36,8 +36,8 @@ def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140
     center = (outputWidth/2,outputHeight/2)
     output = radonCircleLoop(input,output, stepsArray, stepSize, center,circleRadius,len(input),detectorsWidth,inverse=True)
 
-    output -= min(output.flatten())
-    output /= max(output.flatten())
+    if normalize:
+        output /= max(output.flatten())
     return output
 
 def radonCircleLoop(input, output, stepsArray, step, center, circleRadius, detectorsNumber, detectorsWidth, inverse=False):
@@ -102,7 +102,7 @@ def BresenhamAlgorithm(input, A, B, output=None, moreThanZeroValues=True, return
             color = input[inputSizeY - 1 - int(Y)][int(X)]
             if not moreThanZeroValues or color > 0: output.append(color)
         if not returnOrDraw and X>=0 and Y>=0 and Y<outSizeY and X < outSizeX:
-            output[outSizeY - 1 - int(Y)][int(X)] += lineColor
+            output[outSizeY - 1 - int(Y)][int(X)] = max(0, output[outSizeY - 1 - int(Y)][int(X)]+lineColor)
         return X+xAdd,Y+yAdd,output
 
     if dx >= dy :
