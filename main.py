@@ -7,13 +7,13 @@ import radon as rn
 import numpy as np
 from skimage import data, color, measure
 import gui
+#
+# step = 0.5
+# detectorsNumber = 200
+# detectorWidth = 150
+# filter=True
 
-step = 0.5
-detectorsNumber = 200
-detectorWidth = 150
-filter=True
-
-def transformImage(graph, path):
+def transformImage(graph, path, step=0.5, detectorsNumber=200, detectorWidth=150, filter=True):
     inData = data.imread(path, as_grey=True)
     graph.changePlot((2,2,1),inData)
     sinogram = rn.radonTransform(inData, stepSize=step, detectorsNumber=detectorsNumber, detectorsWidth=detectorWidth)

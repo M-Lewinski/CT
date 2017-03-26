@@ -12,6 +12,8 @@ def readDicomFile(filename):
 
 def saveDicomFile(filename, patientName, patientId, imageArray):
         meta = Dataset()
+        meta.MediaStorageSOPClassUID = "10"
+
 
         #TODO set meta params
 
