@@ -13,11 +13,12 @@ import gui
 # detectorWidth = 150
 # filter=True
 
-def transformImage(graph, path, step=0.5, detectorsNumber=200, detectorWidth=150, filter=True):
-    inData = data.imread(path, as_grey=True)
-    graph.changePlot((2,2,1),inData)
-    sinogram = rn.radonTransform(inData, stepSize=step, detectorsNumber=detectorsNumber, detectorsWidth=detectorWidth)
-    graph.plots[(2,2,2)].imshow(sinogram, cmap='gray', extent=[0,180,len(sinogram),0], interpolation=None)
+def transformImage(graph, image, step=0.5, detectorsNumber=200, detectorWidth=150, filter=True):
+    # inData = data.imread(path, as_grey=True)
+    graph.changePlot((2,2,1),image)
+    sinogram = rn.radonTransform(image, stepSize=step, detectorsNumber=detectorsNumber, detectorsWidth=detectorWidth)
+    graph.plots[(2,2,2)][1] = sinogram
+    graph.plots[(2,2,2)][0].imshow(sinogram, cmap='gray', extent=[0,180,len(sinogram),0], interpolation=None)
     graph.canvas.show()
     if filter: sinogram = rn.filterSinogram(sinogram)
     inverseRadonImage = rn.inverseRadonTransform(sinogram, stepSize=step, detectorsWidth=detectorWidth)

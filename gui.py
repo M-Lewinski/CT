@@ -12,6 +12,8 @@ import os.path as os
 from tkinter import messagebox
 from collections import defaultdict
 import string
+import file
+from skimage import data
 
 class MainGui(tk.Tk):
     def __init__(self):
@@ -83,27 +85,47 @@ class MainGui(tk.Tk):
 
         self.dicom = ttk.Labelframe(rightGrid,text="DICOM Info")
         self.dicom.grid(row=2, column=3, padx=padx, pady=pady, sticky=tk.W)
-        nameDicomFrame = ttk.Labelframe(self.dicom, text="Surname and first name")
-        nameDicomFrame.grid(row=1, column=1, padx=padx, pady=pady, sticky=tk.W)
-        self.nameDicom = tk.Label(nameDicomFrame, text="Name")
-        # self.nameDicom = tk.Text(nameDicomFrame, width=textWidth, height=nameDicomFrame.winfo_height())
-        self.nameDicom.pack()
+        lastNameDicomFrame = ttk.Labelframe(self.dicom, text="Last name")
+        lastNameDicomFrame.grid(row=1, column=1, padx=padx, pady=pady, sticky=tk.W)
+        # self.nameDicom = tk.Label(nameDicomFrame, text="Name")
+        self.lastNameDicom = tk.Text(lastNameDicomFrame, width=textWidth, height=lastNameDicomFrame.winfo_height())
+        self.lastNameDicom.pack()
+        firstnameDicomFrame = ttk.Labelframe(self.dicom, text="First name")
+        firstnameDicomFrame.grid(row=1, column=2, padx=padx, pady=pady, sticky=tk.W)
+        # self.nameDicom = tk.Label(nameDicomFrame, text="Name")
+        self.firstNameDicom = tk.Text(firstnameDicomFrame, width=textWidth, height=firstnameDicomFrame.winfo_height())
+        self.firstNameDicom.pack()
+        genderDicomFrame = ttk.Labelframe(self.dicom, text="Gender")
+        genderDicomFrame.grid(row=1, column=3, padx=padx, pady=pady, sticky=tk.W)
+
+        self.gender = tk.StringVar()
+        # self.nameDicom = tk.Label(nameDicomFrame, text="Name")
+        self.genderDicom = ttk.Combobox(genderDicomFrame, justify=tk.CENTER, state="readonly", width=5, height=genderDicomFrame.winfo_height(),textvariable=self.gender)
+        self.genderDicom.pack()
+        self.genderDicom["values"] = ('M', 'F')
+        self.genderDicom.current(0)
+        birthDicomFrame = ttk.Labelframe(self.dicom, text="Birthday(YYYY-MM-DD)")
+        birthDicomFrame.grid(row=2, column=1, padx=padx, pady=pady, sticky=tk.W)
+        # self.nameDicom = tk.Label(nameDicomFrame, text="Name")
+        self.birthDicom = tk.Text(birthDicomFrame, width=textWidth, height=birthDicomFrame.winfo_height())
+        self.birthDicom.pack()
         idDicomFrame = ttk.Labelframe(self.dicom, text="Id")
-        idDicomFrame.grid(row=1, column=2, padx=padx, pady=pady, sticky=tk.W)
-        self.idDicom = ttk.Label(idDicomFrame, text="Id")
-        # self.idDicom = tk.Text(idDicomFrame, width=textWidth, height=idDicomFrame.winfo_height())
+        idDicomFrame.grid(row=2, column=2, padx=padx, pady=pady, sticky=tk.W)
+        # self.idDicom = ttk.Label(idDicomFrame, text="Id")
+        self.idDicom = tk.Text(idDicomFrame, width=textWidth, height=idDicomFrame.winfo_height())
         self.idDicom.pack()
-        dateDicomFrame = ttk.Labelframe(self.dicom, text="Date")
-        dateDicomFrame.grid(row=2, column=1, padx=padx, pady=pady, sticky=tk.W)
+        dateDicomFrame = ttk.Labelframe(self.dicom, text="Date(YYYY-MM-DD)")
+        dateDicomFrame.grid(row=1, column=4, padx=padx, pady=pady, sticky=tk.W)
         self.dateDicom = tk.Label(dateDicomFrame, text="Date")
         # self.dateDicom = tk.Text(dateDicomFrame, width=textWidth, height=dateDicomFrame.winfo_height())
         self.dateDicom.pack()
-        timeDicomFrame = ttk.Labelframe(self.dicom, text="Time")
-        timeDicomFrame.grid(row=2, column=2, padx=padx, pady=pady, sticky=tk.W)
+        timeDicomFrame = ttk.Labelframe(self.dicom, text="Time(HH:MM:SS)")
+        timeDicomFrame.grid(row=2, column=3, padx=padx, pady=pady, sticky=tk.W)
         self.timeDicom = tk.Label(timeDicomFrame, text="Time")
         # self.timeDicom = tk.Text(timeDicomFrame, width=textWidth, height=timeDicomFrame.winfo_height())
         self.timeDicom.pack()
-
+        saveButton = ttk.Button(self.dicom,text="Save DICOM", command=lambda: self.saveFile())
+        saveButton.grid(row=2, column=4, padx=padx, pady=pady, sticky=tk.W)
         return control, leftGrid, middleGrid, rightGrid
 
     def graphMenu(self):
@@ -124,8 +146,30 @@ class MainGui(tk.Tk):
         fileExtension = self.path.split(".")
         if not fileExtension[1] == "dcm":
             # self.images["values"] = fileExtension[0].split("/")[-1]
+            newImage = data.imread(self.path, as_grey=True)
+            self.graph.changePlot((2,2,1), newImage)
             return
 
+        lastName, firstName, id, birthday, gender, date, time, newImage = file.readDicomFileToNumpyArray(self.path)
+        self.graph.changePlot((2,2,1),newImage)
+        self.lastNameDicom.delete("1.0", tk.END)
+        self.lastNameDicom.insert("1.0", lastName)
+        self.firstNameDicom.delete("1.0", tk.END)
+        self.firstNameDicom.insert("1.0", firstName)
+        self.idDicom.delete("1.0",tk.END)
+        self.idDicom.insert("1.0", id)
+        self.dateDicom.config(text=date)
+        self.timeDicom.config(text=time)
+        self.birthDicom.delete("1.0", tk.END)
+        self.birthDicom.insert("1.0", birthday)
+        gender = gender.upper()
+        if gender == "M":
+            self.genderDicom.current(0)
+        elif gender == "F":
+            self.genderDicom.current(1)
+
+    def saveFile(self):
+        print("Hej")
 
     def checkText(self, value, textBox):
         valueInt = value.translate(self.digitChecker)
@@ -159,7 +203,7 @@ class MainGui(tk.Tk):
         span = self.checkText(self.spanText.get("1.0", "end-1c"), self.spans)
         if span is None:
             return
-        main.transformImage(self.graph, self.path, step=step, detectorsNumber=detector, detectorWidth=span, filter=self.filterVar.get())
+        main.transformImage(self.graph, self.graph.plots[(2,2,1)][1], step=step, detectorsNumber=detector, detectorWidth=span, filter=self.filterVar.get())
 
 
 class Graph(Figure):
@@ -178,10 +222,11 @@ class Graph(Figure):
                 plt.set_xlabel(titles[i]["xlabel"])
             if "ylabel" in titles[i]:
                 plt.set_ylabel(titles[i]["ylabel"])
-            self.plots[(2, 2, i+1)] = plt
+            self.plots[(2, 2, i+1)] = [plt, None]
 
     def changePlot(self,plot,image,cmap="gray"):
-        self.plots[plot].imshow(image,cmap=cmap)
+        self.plots[plot][1] = image
+        self.plots[plot][0].imshow(image,cmap=cmap)
         self.canvas.show()
 
     def swapImage(self, number):
