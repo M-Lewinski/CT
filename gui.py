@@ -14,6 +14,7 @@ from collections import defaultdict
 import string
 import file
 from skimage import data
+import radon
 
 class MainGui(tk.Tk):
     def __init__(self):
@@ -30,7 +31,7 @@ class MainGui(tk.Tk):
         sliderLabel = ttk.Labelframe(middleGrid, text="Inverse image number")
         sliderLabel.grid(row=1, column=2, pady=10, sticky=tk.W)
         self.imageNumber.set(1)
-        slider = tk.Scale(sliderLabel, variable=self.imageNumber, from_=1, to=10, orient=tk.HORIZONTAL,
+        slider = tk.Scale(sliderLabel, variable=self.imageNumber, from_=1, to=radon.iterationCount, orient=tk.HORIZONTAL,
                           command=lambda value: self.graph.swapImage(int(value)-1))
         slider.pack(padx=10, pady=10)
 
@@ -142,9 +143,13 @@ class MainGui(tk.Tk):
     def chooseFile(self):
         # self.images.config(state="readonly")
         self.path = filedialog.askopenfilename()
+        if self.path == () or self.path == "":
+            self.path = ""
+            return
         self.pathLabel.config(text=self.path)
+        # print(self.path)
         fileExtension = self.path.split(".")
-        if not fileExtension[1] == "dcm":
+        if len(fileExtension) < 2 or not fileExtension[1] == "dcm":
             # self.images["values"] = fileExtension[0].split("/")[-1]
             newImage = data.imread(self.path, as_grey=True)
             self.graph.changePlot((2,2,1), newImage)
@@ -169,9 +174,37 @@ class MainGui(tk.Tk):
             self.genderDicom.current(1)
 
     def saveFile(self):
-        print("Hej")
+        lastName = self.lastNameDicom.get("1.0", "end-1c")
+        if lastName == "":
+            messagebox.showinfo(title="Last name", message=("Last name box empty"))
+            return
+        firstName = self.firstNameDicom.get("1.0", "end-1c")
+        if firstName == "":
+            messagebox.showinfo(title="First name", message=("First name box empty"))
+            return
+        gender = self.genderDicom.get()
+        birth = self.birthDicom.get("1.0", "end-1c")
+        birth = birth.translate(self.digitChecker)
+        if len(birth) != 8:
+            messagebox.showinfo(title="Birth date", message=("Wrong birth date"))
+            return
+        id = self.idDicom.get("1.0", "end-1c")
+        if id == "":
+            messagebox.showinfo(title="Empty id", message=("Id box empty"))
+            return
+        filePath = filedialog.asksaveasfilename(filetypes=(("DICOM files", "*.dcm"),
+                                           ("All files", "*.*")))
+        if filePath == '':
+            return
+        filePath = filePath.split(".")[0]
+        extension = ".dcm"
+        file.saveDicomFile(filePath+"Original"+extension,lastName+'^'+firstName,id,gender,birth,self.graph.plots[(2,2,1)][1])
+        file.saveDicomFile(filePath+"Sinogram"+extension,lastName+'^'+firstName,id,gender,birth,self.graph.plots[(2,2,2)][1], transpose=True)
+        for i in range(radon.iterationCount):
+                file.saveDicomFile(filePath+str(i)+extension,lastName+'^'+firstName,id,gender,birth, self.graph.inverseImages[i])
 
-    def checkText(self, value, textBox):
+
+    def checkParam(self, value, textBox):
         valueInt = value.translate(self.digitChecker)
         name = textBox[0]
         lowerBound = textBox[1]
@@ -194,23 +227,24 @@ class MainGui(tk.Tk):
         if not os.isfile(self.path):
             messagebox.showinfo(title="No file", message="Please choose existing file")
             return
-        step = self.checkText(self.stepText.get("1.0", "end-1c"), self.steps)
+        step = self.checkParam(self.stepText.get("1.0", "end-1c"), self.steps)
         if step is None:
             return
-        detector = self.checkText(self.detectorText.get("1.0", "end-1c"), self.detectors)
+        detector = self.checkParam(self.detectorText.get("1.0", "end-1c"), self.detectors)
         if detector is None:
             return
-        span = self.checkText(self.spanText.get("1.0", "end-1c"), self.spans)
+        span = self.checkParam(self.spanText.get("1.0", "end-1c"), self.spans)
         if span is None:
             return
         main.transformImage(self.graph, self.graph.plots[(2,2,1)][1], step=step, detectorsNumber=detector, detectorWidth=span, filter=self.filterVar.get())
+        self.graph.swapImage(self.imageNumber.get())
 
 
 class Graph(Figure):
     plots = {}
     canvas = None
     def __init__(self, figsize=(10,10), dpi=100):
-        self.inverseImages = [None]*10
+        self.inverseImages = [None]*radon.iterationCount
         Figure.__init__(self, figsize=figsize, dpi=dpi)
         titles = [{"title": "Original image"}, {"title": "Radon transform image", "xlabel": "Emiter/detector rotation", "ylabel": "Number of receiver"},
                   {"title": "Inverse Radon transform image"}]
@@ -230,6 +264,8 @@ class Graph(Figure):
         self.canvas.show()
 
     def swapImage(self, number):
+        if number < 0 or number >= len(self.inverseImages):
+            return
         if self.inverseImages[number] is not None:
             self.changePlot((2,2,3), self.inverseImages[number])
 

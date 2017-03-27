@@ -1,4 +1,5 @@
 import numpy as np
+iterationCount = 10
 
 def createBackProjectionFilter(len):
     if len%2==0: raise NameError("Incorrect len")
@@ -37,13 +38,21 @@ def inverseRadonTransform(input, stepSize=1, stepsArray=None, detectorsWidth=140
     output = radonCircleLoop(input,output, stepsArray, stepSize, center,circleRadius,len(input),detectorsWidth,inverse=True)
 
     if normalize:
-        output /= max(output.flatten())
+        for i in range(len(output)):
+            output[i] /= max(output[i].flatten())
     return output
 
 def radonCircleLoop(input, output, stepsArray, step, center, circleRadius, detectorsNumber, detectorsWidth, inverse=False):
     detectorDistance = (circleRadius * 2 * detectorsWidth / 180) / detectorsNumber
-
-    for stepAngle in stepsArray:
+    iterations = [0]
+    imagesIter = []
+    if inverse == True:
+        count = len(stepsArray)
+        nextIter = np.floor(count/iterationCount)
+        for i in range(1,iterationCount-1):
+            iterations.append(i*nextIter)
+        iterations.append(count-1)
+    for index,stepAngle in enumerate(stepsArray):
         centralEmiterPos = (center[0] + circleRadius * np.sin(np.radians(stepAngle)),center[1] + np.cos(np.radians(stepAngle)) * circleRadius)
         centralReceiverPos = (center[0] - circleRadius * np.sin(np.radians(stepAngle)),center[1] - np.cos(np.radians(stepAngle)) * circleRadius)
 
@@ -60,6 +69,11 @@ def radonCircleLoop(input, output, stepsArray, step, center, circleRadius, detec
             else:
                 color = input[currentDetector, int(stepAngle/step)]
                 output = BresenhamAlgorithm(input, emiterPos, receiverPos, output, returnOrDraw=False, lineColor=color)
+        if inverse == True:
+            if index in iterations:
+                imagesIter.append(output.copy())
+    if inverse == True:
+        return imagesIter
     return output
 
 def filterSinogram(input):
